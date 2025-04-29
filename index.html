@@ -3,73 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Employee Tracker Timestamp</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 400px;
-      margin: 50px auto;
-      padding: 20px;
-      border: 2px solid #ccc;
-      border-radius: 10px;
-      box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-    }
-    label, select, input, button {
-      display: block;
-      width: 100%;
-      margin-bottom: 15px;
-    }
-    .button-row {
-      display: flex;
-      justify-content: space-between;
-    }
-    button {
-      width: 48%;
-      padding: 10px;
-      font-size: 16px;
-    }
-  </style>
+  <title>Home Menu</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h2>Employee Time Log</h2>
-
-  <label for="employee">Select Name:</label>
-  <select id="employee">
-    <option value="" disabled selected>Select your name</option>
-    <option value="Khairul">Khairul</option>
-    <option value="Lin">Lin</option>
-    <option value="Emy">Emy</option>
-    <option value="Adi">Adi</option>
-    <option value="Adam">Adam</option>
-    <option value="Andrew">Andrew</option>
-    <option value="Hanqi">Hanqi</option>
-    <option value="Jun Hong">Jun Hong</option>
-    <option value="Rafiz">Rafiz</option>
-    <option value="Hurein">Hurein</option>
-  </select>
-
-  <label for="reason">Reason:</label>
-  <input type="text" id="reason" placeholder="Enter reason" />
-
-  <div class="button-row">
-    <button onclick="logTime('Check In')">Check In</button>
-    <button onclick="logTime('Check Out')">Check Out</button>
+  <div class="container">
+    <h1>Main Menu</h1>
+    <a href="timestamp.html" class="button">Go to Time Stamp</a>
   </div>
-
-  <script>
-    function logTime(action) {
-      const name = document.getElementById('employee').value;
-      const reason = document.getElementById('reason').value.trim();
-      const timestamp = new Date().toLocaleString();
-
-      if (!name || !reason) {
-        alert("Please select a name and enter a reason.");
-        return;
-      }
-
-      console.log(`${timestamp} - ${name} - ${action} - ${reason}`);
-      alert(`${action} recorded for ${name} at ${timestamp}`);
-    }
-  </script>
 </body>
 </html>
