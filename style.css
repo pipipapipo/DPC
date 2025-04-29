@@ -1,45 +1,44 @@
+/* style.css */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f9f9f9;
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
   margin: 0;
-  padding: 20px;
-  text-align: center;
+  padding: 0;
 }
 
 .container {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 20px;
-  background: white;
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 30px;
+  background: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
-h1, h2 {
-  color: #333;
+h1 {
+  font-size: 2.2em;
+  margin-bottom: 5px;
 }
 
-a.button, button {
+#datetime {
+  font-size: 1em;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.button {
   display: inline-block;
   margin: 10px;
   padding: 12px 20px;
-  font-size: 16px;
-  background-color: #4CAF50;
+  background-color: #007bff;
   color: white;
-  border: none;
-  border-radius: 6px;
   text-decoration: none;
-  cursor: pointer;
+  border-radius: 8px;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
 }
 
-a.button:hover, button:hover {
-  background-color: #45a049;
-}
-
-select, input {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0 20px 0;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+.button:hover {
+  background-color: #0056b3;
 }
