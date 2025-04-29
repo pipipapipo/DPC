@@ -1,4 +1,45 @@
-your-repo/
-├── index.html          ← Main menu homepage
-├── timestamp.html      ← Time stamp page
-├── style.css           ← Shared styles
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+}
+
+.container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1, h2 {
+  color: #333;
+}
+
+a.button, button {
+  display: inline-block;
+  margin: 10px;
+  padding: 12px 20px;
+  font-size: 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.button:hover, button:hover {
+  background-color: #45a049;
+}
+
+select, input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0 20px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
