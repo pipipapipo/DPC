@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventory Scanner</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>Scan QR Code</h2>
+    <div id="reader" style="width: 100%; margin: 0 auto;"></div>
+    <p id="result" style="margin-top: 20px; font-weight: bold;"></p>
+    <a href="index.html" class="button">Back to Menu</a>
+  </div>
+
+  <script>
+    function onScanSuccess(decodedText, decodedResult) {
+      document.getElementById('result').textContent = `Scanned: ${decodedText}`;
+      // Optional: Stop scanning after successful scan
+      html5QrcodeScanner.clear();
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader", 
+      { fps: 10, qrbox: 250 },
+      /* verbose= */ false
+    );
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
+</body>
+</html>
