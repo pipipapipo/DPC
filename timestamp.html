@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Timestamp</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>Employee Time Log</h2>
+
+    <label for="employee">Select Name:</label>
+    <select id="employee">
+      <option value="" disabled selected>Select your name</option>
+      <option value="Alice">Alice</option>
+      <option value="Bob">Bob</option>
+      <option value="Charlie">Charlie</option>
+    </select>
+
+    <label for="reason">Reason:</label>
+    <input type="text" id="reason" placeholder="Enter reason" />
+
+    <div class="button-row">
+      <button onclick="logTime('Check In')">Check In</button>
+      <button onclick="logTime('Check Out')">Check Out</button>
+    </div>
+
+    <a href="index.html" class="button">Back to Menu</a>
+  </div>
+
+  <script>
+    function logTime(action) {
+      const name = document.getElementById('employee').value;
+      const reason = document.getElementById('reason').value.trim();
+      const timestamp = new Date().toLocaleString();
+
+      if (!name || !reason) {
+        alert("Please select a name and enter a reason.");
+        return;
+      }
+
+      console.log(`${timestamp} - ${name} - ${action} - ${reason}`);
+      alert(`${action} recorded for ${name} at ${timestamp}`);
+    }
+  </script>
+</body>
+</html>
