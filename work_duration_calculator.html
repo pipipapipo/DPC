@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Work Duration Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f4f4f4;
+      border-radius: 10px;
+    }
+    h1 {
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    button {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .output {
+      margin-top: 20px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Work Duration Calculator</h1>
+
+  <label>Start Time:</label>
+  <input type="datetime-local" id="startTime" />
+
+  <label>End Time:</label>
+  <input type="datetime-local" id="endTime" />
+
+  <button onclick="calculateDuration()">Calculate</button>
+
+  <div class="output" id="result"></div>
+
+  <script>
+    function roundToNearest30(mins) {
+      return Math.ceil(mins / 30) * 30;
+    }
+
+    function calculateDuration() {
+      const startInput = document.getElementById("startTime").value;
+      const endInput = document.getElementById("endTime").value;
+      const result = document.getElementById("result");
+      result.innerHTML = "";
+
+      if (!startInput || !endInput) {
+        result.innerHTML = "⛔ Please enter both start and end times.";
+        return;
+      }
+
+      const start = new Date(startInput);
+      const end = new Date(endInput);
+
+      if (end <= start) {
+        result.innerHTML = "⛔ End time must be after start time.";
+        return;
+      }
+
+      const day = start.getDay(); // 0 = Sunday, 6 = Saturday
+      const isWeekend = day === 0 || day === 6;
+
+      const workStart = new Date(start);
+      const workEnd = new Date(start);
+
+      workStart.setHours(8, 30, 0, 0);
+      if (day >= 0 && day <= 3) {
+        workEnd.setHours(18, 0, 0, 0); // Mon-Thu
+      } else if (day === 4) {
+        workEnd.setHours(17, 30, 0, 0); // Fri
+      } else {
+        workEnd.setHours(0, 0, 0, 0);
+      }
+
+      const totalMinutes = (end - start) / 60000;
+      let extraFlags = [];
+
+      if (isWeekend) {
+        extraFlags.push("Weekend work");
+      }
+      if (start < workStart) {
+        extraFlags.push("Started before working hours");
+      }
+      if (end > workEnd) {
+        extraFlags.push("Ended after working hours");
+      }
+
+      if (!isWeekend && end < workEnd) {
+        const confirmEarly = confirm("End time is before standard hours. Is this correct?");
+        if (!confirmEarly) {
+          result.innerHTML = "❗ Please confirm or re-enter end time.";
+          return;
+        }
+      }
+
+      let rounded = roundToNearest30(totalMinutes);
+      if (totalMinutes > 360) {
+        rounded -= 60; // Deduct break
+      }
+
+      const hours = Math.floor(rounded / 60);
+      const mins = rounded % 60;
+
+      result.innerHTML = `
+        ✅ Rounded work duration: <strong>${hours}h ${mins}m</strong><br>
+        ${extraFlags.length ? `⚠️ Extra Time Flagged: ${extraFlags.join(", ")}` : ""}
+      `;
+    }
+  </script>
+</body>
+</html>
