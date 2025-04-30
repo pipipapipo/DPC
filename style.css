@@ -1,9 +1,10 @@
 /* style.css */
 
 .logo {
-  width: 80px;
+  max-width: 150px;
   height: auto;
-  margin-bottom: 10px;
+  display: block;
+  margin: 0 auto 20px auto;
 }
 
 body {
