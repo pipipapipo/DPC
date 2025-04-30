@@ -4,39 +4,66 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DPC Main Menu</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      font-size: 2.2em;
+      margin-bottom: 10px;
+    }
+    .datetime {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      color: #666;
+    }
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+      max-width: 90%;
+      margin: 0 auto;
+    }
+    .button-container a button {
+      width: 100%;
+      max-width: 300px;
+      padding: 15px;
+      font-size: 1.2em;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .button-container a button:hover {
+      background: #0056b3;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
 <body>
- <div class="container">
-  <img src="20250430_164952_0000.png" alt="DPC Logo" class="logo" />
+  <img src="your_logo.png" alt="Logo" />
   <h1>DPC Main Menu</h1>
-  <p id="datetime"></p>
+  <div class="datetime" id="datetime"></div>
 
-  <a href="timestamp.html" class="button">Time Stamp</a>
-  <a href="scanner.html" class="button">Inventory Scanner</a>
-  <a href="work_duration_calculator.html" class="button">Work Hours Calculator</a>
-  
-
- </div>
-
+  <div class="button-container">
+    <a href="timestamp.html"><button>Time Stamp</button></a>
+    <a href="inventory_scanner.html"><button>Inventory Scanner</button></a>
+    <a href="work_duration.html"><button>Work Duration</button></a>
+  </div>
 
   <script>
-    function updateDateTime() {
-      const now = new Date();
-      const options = {
-        day: '2-digit',
-        month: 'short',
-        year: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      };
-      const formatted = now.toLocaleString('en-GB', options).replace(',', '');
-      document.getElementById('datetime').textContent = formatted;
-    }
-
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
+    const now = new Date();
+    const options = { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' };
+    document.getElementById("datetime").textContent = now.toLocaleString('en-GB', options).replace(',', '');
   </script>
 </body>
 </html>
