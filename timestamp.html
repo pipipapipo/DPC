@@ -83,16 +83,9 @@
       background-color: #495057;
     }
 
-    @media (max-width: 480px) {
-      h2 {
-        font-size: 22px;
-      }
-
-      button,
-      input,
-      select {
-        font-size: 20px;
-      }
+    #otherReason {
+      display: none;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -111,7 +104,15 @@
     </select>
 
     <label for="reason">Reason:</label>
-    <input type="text" id="reason" placeholder="Enter reason" />
+    <select id="reason" onchange="toggleOtherReason()">
+      <option value="" disabled selected>Select reason</option>
+      <option value="A">A</option>
+      <option value="B">B</option>
+      <option value="C">C</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <input type="text" id="otherReason" placeholder="Enter other reason" />
 
     <div class="button-row">
       <button onclick="logTime('Check In')">Clock In</button>
@@ -122,18 +123,70 @@
   </div>
 
   <script>
+    let checkInTime = null;
+    let checkOutTime = null;
+
+    function toggleOtherReason() {
+      const reasonDropdown = document.getElementById('reason');
+      const otherInput = document.getElementById('otherReason');
+      otherInput.style.display = reasonDropdown.value === 'Other' ? 'block' : 'none';
+    }
+
+    function getFullReason() {
+      const reason = document.getElementById('reason').value;
+      if (!reason) return '';
+      if (reason === 'Other') {
+        const otherText = document.getElementById('otherReason').value.trim();
+        return otherText ? otherText : '';
+      }
+      return reason;
+    }
+
+    function roundToNearest30(mins) {
+      return Math.ceil(mins / 30) * 30;
+    }
+
+    function calculateDuration(start, end) {
+      const totalMinutes = (end - start) / 60000;
+      const roundedMinutes = roundToNearest30(totalMinutes);
+
+      const hours = Math.floor(roundedMinutes / 60);
+      const minutes = roundedMinutes % 60;
+      return `${hours}h ${minutes}m (rounded)`;
+    }
+
     function logTime(action) {
       const name = document.getElementById('employee').value;
-      const reason = document.getElementById('reason').value.trim();
-      const timestamp = new Date().toLocaleString();
+      const reason = getFullReason();
+      const now = new Date();
 
       if (!name || !reason) {
-        alert("Please select a name and enter a reason.");
+        alert("Please select a name and enter a valid reason.");
         return;
       }
 
-      console.log(`${timestamp} - ${name} - ${action} - ${reason}`);
-      alert(`${action} recorded for ${name} at ${timestamp}`);
+      if (action === 'Check In') {
+        checkInTime = now;
+      } else if (action === 'Check Out') {
+        checkOutTime = now;
+      }
+
+      let message = `${action} recorded for ${name}\nReason: ${reason}\nTime: ${now.toLocaleString()}`;
+
+      if (checkInTime && checkOutTime && checkOutTime > checkInTime) {
+        const duration = calculateDuration(checkInTime, checkOutTime);
+        message += `\n\nWork Duration: ${duration}`;
+      }
+
+      const confirmed = confirm(message + "\n\nDo you want to proceed?");
+      if (confirmed) {
+        console.log(`${now.toLocaleString()} - ${name} - ${action} - ${reason}`);
+        alert(`${action} confirmed.`);
+      } else {
+        alert("Action cancelled.");
+        if (action === 'Check In') checkInTime = null;
+        if (action === 'Check Out') checkOutTime = null;
+      }
     }
   </script>
 </body>
