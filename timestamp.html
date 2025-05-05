@@ -83,7 +83,8 @@
       background-color: #495057;
     }
 
-    #otherReason {
+    #otherReason,
+    #otherSite {
       display: none;
       margin-top: 10px;
     }
@@ -103,13 +104,26 @@
       <option value="Lin">Lin</option>
     </select>
 
+    <label for="site">Site/Area:</label>
+    <select id="site" onchange="toggleOtherSite()">
+      <option value="" disabled selected>Select site</option>
+      <option value="North">North</option>
+      <option value="South">South</option>
+      <option value="East">East</option>
+      <option value="West">West</option>
+      <option value="Central">Central</option>
+      <option value="Other">Others</option>
+    </select>
+
+    <input type="text" id="otherSite" placeholder="Enter other site/area" />
+
     <label for="reason">Reason:</label>
     <select id="reason" onchange="toggleOtherReason()">
       <option value="" disabled selected>Select reason</option>
       <option value="On-site inspection">On-site inspection</option>
       <option value="Logistic Deployment">Logistic Deployment</option>
       <option value="Admin Deployment">Admin Deployment</option>
-      <option value="Management Update">Management Update</option
+      <option value="Management Update">Management Update</option>
       <option value="Others">Others</option>
     </select>
 
@@ -128,19 +142,31 @@
     let checkOutTime = null;
 
     function toggleOtherReason() {
-      const reasonDropdown = document.getElementById('reason');
-      const otherInput = document.getElementById('otherReason');
-      otherInput.style.display = reasonDropdown.value === 'Other' ? 'block' : 'none';
+      const reason = document.getElementById('reason').value;
+      document.getElementById('otherReason').style.display = reason === 'Others' ? 'block' : 'none';
+    }
+
+    function toggleOtherSite() {
+      const site = document.getElementById('site').value;
+      document.getElementById('otherSite').style.display = site === 'Other' ? 'block' : 'none';
     }
 
     function getFullReason() {
       const reason = document.getElementById('reason').value;
-      if (!reason) return '';
-      if (reason === 'Other') {
-        const otherText = document.getElementById('otherReason').value.trim();
-        return otherText ? otherText : '';
+      if (reason === 'Others') {
+        const other = document.getElementById('otherReason').value.trim();
+        return other || '';
       }
       return reason;
+    }
+
+    function getFullSite() {
+      const site = document.getElementById('site').value;
+      if (site === 'Other') {
+        const other = document.getElementById('otherSite').value.trim();
+        return other || '';
+      }
+      return site;
     }
 
     function roundToNearest30(mins) {
@@ -150,7 +176,6 @@
     function calculateDuration(start, end) {
       const totalMinutes = (end - start) / 60000;
       const roundedMinutes = roundToNearest30(totalMinutes);
-
       const hours = Math.floor(roundedMinutes / 60);
       const minutes = roundedMinutes % 60;
       return `${hours}h ${minutes}m (rounded)`;
@@ -158,11 +183,12 @@
 
     function logTime(action) {
       const name = document.getElementById('employee').value;
+      const site = getFullSite();
       const reason = getFullReason();
       const now = new Date();
 
-      if (!name || !reason) {
-        alert("Please select a name and enter a valid reason.");
+      if (!name || !site || !reason) {
+        alert("Please complete all fields before proceeding.");
         return;
       }
 
@@ -172,7 +198,7 @@
         checkOutTime = now;
       }
 
-      let message = `${action} recorded for ${name}\nReason: ${reason}\nTime: ${now.toLocaleString()}`;
+      let message = `${action} recorded for ${name}\nSite: ${site}\nReason: ${reason}\nTime: ${now.toLocaleString()}`;
 
       if (checkInTime && checkOutTime && checkOutTime > checkInTime) {
         const duration = calculateDuration(checkInTime, checkOutTime);
@@ -181,7 +207,7 @@
 
       const confirmed = confirm(message + "\n\nDo you want to proceed?");
       if (confirmed) {
-        console.log(`${now.toLocaleString()} - ${name} - ${action} - ${reason}`);
+        console.log(`${now.toLocaleString()} - ${name} - ${action} - Site: ${site} - Reason: ${reason}`);
         alert(`${action} confirmed.`);
       } else {
         alert("Action cancelled.");
