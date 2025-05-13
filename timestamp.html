@@ -135,84 +135,110 @@
     <a href="index.html" class="button">Back to Menu</a>
   </div>
 
-  <script>
-    let checkInTime = null;
-    let checkOutTime = null;
+<!-- Keep the rest of your HTML as-is -->
+<script>
+  let checkInTime = null;
+  let checkOutTime = null;
 
-    function toggleOtherReason() {
-      const reason = document.getElementById('reason').value;
-      document.getElementById('otherReason').style.display = reason === 'Others' ? 'block' : 'none';
+  function toggleOtherReason() {
+    const reason = document.getElementById('reason').value;
+    document.getElementById('otherReason').style.display = reason === 'Others' ? 'block' : 'none';
+  }
+
+  function toggleOtherSite() {
+    const site = document.getElementById('site').value;
+    document.getElementById('otherSite').style.display = site === 'Other' ? 'block' : 'none';
+  }
+
+  function getFullReason() {
+    const reason = document.getElementById('reason').value;
+    if (reason === 'Others') {
+      const other = document.getElementById('otherReason').value.trim();
+      return other || '';
+    }
+    return reason;
+  }
+
+  function getFullSite() {
+    const site = document.getElementById('site').value;
+    if (site === 'Other') {
+      const other = document.getElementById('otherSite').value.trim();
+      return other || '';
+    }
+    return site;
+  }
+
+  function roundToNearest30(mins) {
+    return Math.ceil(mins / 30) * 30;
+  }
+
+  function calculateDuration(start, end) {
+    const totalMinutes = (end - start) / 60000;
+    const roundedMinutes = roundToNearest30(totalMinutes);
+    const hours = Math.floor(roundedMinutes / 60);
+    const minutes = roundedMinutes % 60;
+    return `${hours}h ${minutes}m (rounded)`;
+  }
+
+  function logTime(action) {
+    const name = document.getElementById('employee').value;
+    const site = getFullSite();
+    const reason = getFullReason();
+    const now = new Date();
+
+    if (!name || !site || !reason) {
+      alert("Please complete all fields before proceeding.");
+      return;
     }
 
-    function toggleOtherSite() {
-      const site = document.getElementById('site').value;
-      document.getElementById('otherSite').style.display = site === 'Other' ? 'block' : 'none';
+    if (action === 'Check In') {
+      checkInTime = now;
+    } else if (action === 'Check Out') {
+      checkOutTime = now;
     }
 
-    function getFullReason() {
-      const reason = document.getElementById('reason').value;
-      if (reason === 'Others') {
-        const other = document.getElementById('otherReason').value.trim();
-        return other || '';
-      }
-      return reason;
+    let message = `${action} recorded for ${name}\nSite: ${site}\nReason: ${reason}\nTime: ${now.toLocaleString()}`;
+
+    if (checkInTime && checkOutTime && checkOutTime > checkInTime) {
+      const duration = calculateDuration(checkInTime, checkOutTime);
+      message += `\n\nWork Duration: ${duration}`;
     }
 
-    function getFullSite() {
-      const site = document.getElementById('site').value;
-      if (site === 'Other') {
-        const other = document.getElementById('otherSite').value.trim();
-        return other || '';
-      }
-      return site;
+    const confirmed = confirm(message + "\n\nDo you want to proceed?");
+    if (!confirmed) {
+      alert("Action cancelled.");
+      if (action === 'Check In') checkInTime = null;
+      if (action === 'Check Out') checkOutTime = null;
+      return;
     }
 
-    function roundToNearest30(mins) {
-      return Math.ceil(mins / 30) * 30;
-    }
-
-    function calculateDuration(start, end) {
-      const totalMinutes = (end - start) / 60000;
-      const roundedMinutes = roundToNearest30(totalMinutes);
-      const hours = Math.floor(roundedMinutes / 60);
-      const minutes = roundedMinutes % 60;
-      return `${hours}h ${minutes}m (rounded)`;
-    }
-
-    function logTime(action) {
-      const name = document.getElementById('employee').value;
-      const site = getFullSite();
-      const reason = getFullReason();
-      const now = new Date();
-
-      if (!name || !site || !reason) {
-        alert("Please complete all fields before proceeding.");
-        return;
-      }
-
-      if (action === 'Check In') {
-        checkInTime = now;
-      } else if (action === 'Check Out') {
-        checkOutTime = now;
-      }
-
-      let message = `${action} recorded for ${name}\nSite: ${site}\nReason: ${reason}\nTime: ${now.toLocaleString()}`;
-
-      if (checkInTime && checkOutTime && checkOutTime > checkInTime) {
-        const duration = calculateDuration(checkInTime, checkOutTime);
-        message += `\n\nWork Duration: ${duration}`;
-      }
-
-      const confirmed = confirm(message + "\n\nDo you want to proceed?");
-      if (confirmed) {
-        console.log(`${now.toLocaleString()} - ${name} - ${action} - Site: ${site} - Reason: ${reason}`);
-        alert(`${action} confirmed.`);
+    // ✅ Send data to Google Apps Script Web App
+    fetch("https://script.google.com/macros/s/AKfycbwS5j41FOzUSzNzIZ1bgaHE783O7OXl7Nezin96Ab-d93G6KNBwPrC89Z4o00Hl4Ihy/exec", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: name,
+        site: site,
+        reason: reason,
+        action: action
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert("Timestamp recorded successfully.");
       } else {
-        alert("Action cancelled.");
-        if (action === 'Check In') checkInTime = null;
-        if (action === 'Check Out') checkOutTime = null;
+        alert("Failed to record timestamp. Please try again.");
       }
-    }
-  </script>
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      alert("There was an error. Please check your network or try again later.");
+    });
+  }
+</script>
+
 </body>
 </html>
