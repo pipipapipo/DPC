@@ -26,8 +26,20 @@
   <form id="eccForm">
     <!-- Personal Details -->
     <fieldset>
-      <legend>Personal Details</legend>
+      <legend> Name of ESRI</legend>
+      <select name="frequency" required>
+        <option value="">— Select ESRI —</option>
+        <option value="Daily">Yazit Ahmad</option>
+        <option value="Weekly">Juraime </option>
+        <option value="Monthly">Monthly</option>
+      </select>
       <div class="personal-field">
+        <label for="email">Details of ECC/ECO(SP)</label>
+        <input type="email" id="email" name="email" required />
+        <div class="error-msg">Please enter a valid email.</div>
+      </div>
+      <div class="error-msg">Please choose an option.</div>
+        <div class="personal-field">
         <label for="fullName">Full Name</label>
         <input type="text" id="fullName" name="fullName" required />
         <div class="error-msg">Please enter your name.</div>
