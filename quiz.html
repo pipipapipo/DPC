@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ECC Competency Assessment</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 1em; }
+    fieldset { border: 1px solid #ccc; padding: 1em; margin-bottom: 1.5em; }
+    legend { font-weight: bold; }
+    .question, .personal-field { margin-bottom: 1em; }
+    label { display: block; margin-bottom: .3em; }
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    select { width: 100%; padding: .5em; box-sizing: border-box; }
+    .wrong { outline: 2px solid #e00; background: #fee; }
+    .correct { outline: 2px solid #0a0; background: #efe; }
+    .error-msg { color: #e00; font-size: .9em; display: none; }
+    button { padding: .7em 1.5em; font-size: 1em; }
+  </style>
+</head>
+<body>
+  <h1>ECC Competency Assessment</h1>
+
+  <form id="eccForm">
+    <!-- Personal Details -->
+    <fieldset>
+      <legend>Personal Details</legend>
+      <div class="personal-field">
+        <label for="fullName">Full Name</label>
+        <input type="text" id="fullName" name="fullName" required />
+        <div class="error-msg">Please enter your name.</div>
+      </div>
+      <div class="personal-field">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required />
+        <div class="error-msg">Please enter a valid email.</div>
+      </div>
+      <div class="personal-field">
+        <label for="phone">Contact Number</label>
+        <input type="tel" id="phone" name="phone" required pattern="\\d{8,}">
+        <div class="error-msg">Please enter your phone number.</div>
+      </div>
+    </fieldset>
+
+    <!-- Question 1 -->
+    <fieldset class="question" id="q1">
+      <legend>1. Which of the following is NOT a role of an ECC?</legend>
+      <label><input type="radio" name="role" value="Manager" required> Manager</label>
+      <label><input type="radio" name="role" value="Engineer"> Engineer</label>
+      <label><input type="radio" name="role" value="Operator"> Operator</label>
+      <div class="error-msg">Please select one option.</div>
+    </fieldset>
+
+    <!-- Question 2 -->
+    <fieldset class="question" id="q2">
+      <legend>2. How often do you use the ECC system?</legend>
+      <select name="frequency" required>
+        <option value="">— Select frequency —</option>
+        <option value="Daily">Daily</option>
+        <option value="Weekly">Weekly</option>
+        <option value="Monthly">Monthly</option>
+      </select>
+      <div class="error-msg">Please choose an option.</div>
+    </fieldset>
+
+    <!-- Question 3 -->
+    <fieldset class="question" id="q3">
+      <legend>3. Are you satisfied with current reporting features?</legend>
+      <label><input type="radio" name="satisfied" value="Yes" required> Yes</label>
+      <label><input type="radio" name="satisfied" value="No"> No</label>
+      <div class="error-msg">Please choose Yes or No.</div>
+    </fieldset>
+
+    <button type="submit">Submit</button>
+    <p id="feedback" style="margin-top:1em;"></p>
+  </form>
+
+  <script>
+    const form = document.getElementById('eccForm');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const fields = form.querySelectorAll('input, select');
+      let valid = true;
+
+      // Reset highlights
+      form.querySelectorAll('.wrong, .correct').forEach(el => {
+        el.classList.remove('wrong', 'correct');
+      });
+      form.querySelectorAll('.error-msg').forEach(msg => msg.style.display = 'none');
+
+      // Basic HTML5 validity + custom feedback
+      fields.forEach(field => {
+        if (!field.checkValidity()) {
+          valid = false;
+          const container = field.closest('fieldset');
+          container.classList.add('wrong');
+          container.querySelector('.error-msg').style.display = 'block';
+        }
+      });
+
+      if (!valid) {
+        document.getElementById('feedback').textContent = 'Please fix the highlighted fields.';
+        return;
+      }
+
+      // Gather data
+      const data = {
+        timestamp: new Date().toISOString(),
+        fullName: form.fullName.value.trim(),
+        email:    form.email.value.trim(),
+        phone:    form.phone.value.trim(),
+        role:         form.role.value,
+        frequency:    form.frequency.value,
+        satisfied:    form.satisfied.value
+      };
+
+      // Highlight correct
+      ['q1','q2','q3'].forEach(id => {
+        document.getElementById(id).classList.add('correct');
+      });
+
+      document.getElementById('feedback').textContent = 'Thanks! Submitting…';
+
+      // Send to your Apps Script endpoint
+      try {
+        const resp = await fetch(
+          'https://script.google.com/macros/s/YOUR_WEB_APP_ID/exec',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          }
+        );
+        if (!resp.ok) throw new Error(await resp.text());
+        document.getElementById('feedback').textContent = 'Submitted successfully!';
+        form.reset();
+      } catch (err) {
+        console.error(err);
+        document.getElementById('feedback').textContent = 'Submission failed; try again later.';
+      }
+    });
+  </script>
+</body>
+</html>
