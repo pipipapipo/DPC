@@ -26,6 +26,7 @@
     appearance:none; border:1px solid var(--ring); background:#0e1526; color:var(--text);
     padding:12px 16px; border-radius:12px; cursor:pointer; font-weight:700;
     transition:transform .06s ease, border-color .2s ease, background .2s ease;
+    text-decoration:none; display:inline-block;
   }
   .btn.primary{ background: #14b8a6; color:#041016; border-color: transparent; }
   .btn:active{ transform: translateY(1px) }
@@ -61,7 +62,7 @@
   .sheet h3{ margin:.2rem 0 .4rem }
   .rows{ display:grid; gap:10px; max-height:50vh; overflow:auto; padding-right:4px; }
   .row{
-    display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center;
+    display:grid; grid-template-columns: 1fr 110px auto; gap:10px; align-items:center;
     background:#0d1629; border:1px solid var(--ring); border-radius:12px; padding:8px;
   }
   .row input{
@@ -96,7 +97,7 @@
         <div class="hint" id="countHint"></div>
       </div>
 
-      <p class="hint">Lists saved to your browser</p>
+      <p class="hint">Weighted, pastel wheel • Lists saved locally</p>
     </section>
   </main>
 
@@ -108,211 +109,3 @@
       <div class="ghost" id="emptyGhost" style="display:none">No places yet — add some below.</div>
       <div class="actions">
         <div style="display:flex; gap:8px">
-          <button id="addRow" class="btn">+ Add place</button>
-          <button id="clearAll" class="btn">Clear all</button>
-        </div>
-        <div style="display:flex; gap:8px">
-          <button id="closeModal" class="btn">Cancel</button>
-          <button id="saveModal" class="btn primary">Save</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<script>
-(() => {
-  // ---------- Storage ----------
-  const KEY = 'lunch_pastel_wheel_v1';
-  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
-  const save = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
-
-  // ---------- Elements ----------
-  const canvas = document.getElementById('wheel');
-  const ctx = canvas.getContext('2d');
-  const DPR = window.devicePixelRatio || 1;
-  const spinBtn = document.getElementById('spinBtn');
-  const editBtn = document.getElementById('editBtn');
-  const shuffleBtn = document.getElementById('shuffleBtn');
-  const resultBox = document.getElementById('result');
-  const winnerText = document.getElementById('winnerText');
-  const countHint = document.getElementById('countHint');
-
-  const modal = document.getElementById('modal');
-  const rowsBox = document.getElementById('rows');
-  const emptyGhost = document.getElementById('emptyGhost');
-  const addRowBtn = document.getElementById('addRow');
-  const clearAllBtn = document.getElementById('clearAll');
-  const closeModalBtn = document.getElementById('closeModal');
-  const saveModalBtn = document.getElementById('saveModal');
-
-  // ---------- State ----------
-  let items = load();
-  if (items.length === 0) {
-    items = ["kallang Wave Mall","Bedok Corner","Mr Grumpy","Changi Village"];
-    save(items);
-  }
-  let rotation = 0; // radians
-  let spinning = false;
-  let pastelSeed = Math.random();
-
-  // Crisp canvas on high DPI + responsive size
-  function fitCanvas() {
-    const css = Math.min(window.innerWidth * 0.92, 520);
-    canvas.style.width = css + 'px';
-    canvas.style.height = css + 'px';
-    canvas.width = Math.round(css * DPR);
-    canvas.height = Math.round(css * DPR);
-  }
-  fitCanvas(); window.addEventListener('resize', () => { fitCanvas(); draw(); });
-
-  // Pastel color generator (low saturation, high lightness)
-  function pastel(i, n, seed=0){
-    const h = ( (i/n) * 360 + seed*360 ) % 360;
-    const s = 55;  // saturation %
-    const l = 72;  // lightness %
-    return `hsl(${h} ${s}% ${l}%)`;
-  }
-
-  // Draw wheel
-  function draw(){
-    const w = canvas.width, h = canvas.height;
-    const cx = w/2, cy = h/2;
-    const r  = Math.min(cx, cy) - 10*DPR;
-    ctx.clearRect(0,0,w,h);
-
-    if(items.length === 0){
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = `${16*DPR}px system-ui,sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('Add places (Edit) to spin!', cx, cy);
-      return;
-    }
-
-    const arc = (Math.PI*2)/items.length;
-
-    // Slices
-    for (let i=0; i<items.length; i++){
-      const start = rotation - Math.PI/2 + i*arc;
-      const end   = start + arc;
-
-      // slice fill
-      ctx.beginPath();
-      ctx.moveTo(cx,cy);
-      ctx.arc(cx,cy,r,start,end);
-      ctx.closePath();
-      ctx.fillStyle = pastel(i, items.length, pastelSeed);
-      ctx.fill();
-
-      // label
-      ctx.save();
-      ctx.translate(cx,cy);
-      ctx.rotate((start+end)/2);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#0b1020';
-      ctx.font = `bold ${Math.max(12, Math.min(18, r/10))*DPR}px system-ui,sans-serif`;
-      const text = items[i];
-      const max = 26;
-      const label = text.length>max ? text.slice(0,max-1)+'…' : text;
-      ctx.fillText(label, r - 14*DPR, 6*DPR);
-      ctx.restore();
-    }
-
-    // hub
-    ctx.beginPath();
-    ctx.arc(cx,cy, 38*DPR, 0, Math.PI*2);
-    ctx.fillStyle = '#0b1020';
-    ctx.fill();
-    ctx.lineWidth = 2*DPR;
-    ctx.strokeStyle = 'rgba(255,255,255,.18)';
-    ctx.stroke();
-  }
-
-  // Spin logic
-  function spin(){
-    if (spinning || items.length===0) return;
-    spinning = true; spinBtn.disabled = true; resultBox.style.display='none';
-
-    const n = items.length, arc = (Math.PI*2)/n;
-    const k = Math.floor(Math.random()*n); // winner index
-    const rounds = 6 + Math.floor(Math.random()*4);
-    const target = rounds * Math.PI * 2 + (2*Math.PI - (k + 0.5) * arc); // land winner at 12 o'clock
-
-    const start = rotation;
-    const delta = target - start;
-    const duration = 3200 + Math.random()*1000;
-    const t0 = performance.now();
-
-    (function anim(now){
-      const t = Math.min(1, (now - t0)/duration);
-      const ease = 1 - Math.pow(1-t, 3); // cubic-out
-      rotation = start + delta * ease;
-      draw();
-      if (t < 1) { requestAnimationFrame(anim); }
-      else {
-        spinning = false; spinBtn.disabled = false;
-        showWinner(k);
-      }
-    })(t0);
-  }
-
-  function showWinner(k){
-    winnerText.textContent = items[k];
-    countHint.textContent = `${items.length} options`;
-    resultBox.style.display = 'block';
-  }
-
-  // Modal helpers
-  function openModal(){
-    rowsBox.innerHTML = '';
-    if (items.length === 0) emptyGhost.style.display = 'block'; else emptyGhost.style.display = 'none';
-    items.forEach((name, idx) => addRow(name));
-    modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
-  }
-  function closeModal(){
-    modal.classList.remove('open'); modal.setAttribute('aria-hidden','true');
-  }
-  function addRow(value=''){
-    const row = document.createElement('div');
-    row.className = 'row';
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = 'Place name';
-    input.value = value;
-    const del = document.createElement('button');
-    del.className = 'del';
-    del.type = 'button';
-    del.textContent = 'Remove';
-    del.onclick = () => {
-      row.remove();
-      if (rowsBox.children.length === 0) emptyGhost.style.display = 'block';
-    };
-    row.append(input, del);
-    rowsBox.appendChild(row);
-    emptyGhost.style.display = 'none';
-    input.focus();
-  }
-  function saveRows(){
-    const inputs = Array.from(rowsBox.querySelectorAll('input'));
-    const next = inputs.map(i => i.value.trim()).filter(Boolean);
-    items = next;
-    save(items);
-    draw();
-  }
-
-  // Events
-  spinBtn.addEventListener('click', spin);
-  shuffleBtn.addEventListener('click', () => { pastelSeed = Math.random(); draw(); });
-  editBtn.addEventListener('click', openModal);
-  addRowBtn.addEventListener('click', () => addRow(''));
-  clearAllBtn.addEventListener('click', () => { rowsBox.innerHTML=''; emptyGhost.style.display='block'; });
-  closeModalBtn.addEventListener('click', closeModal);
-  saveModalBtn.addEventListener('click', () => { saveRows(); closeModal(); });
-  modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
-  window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
-
-  // Init
-  draw();
-})();
-</script>
-</body>
-</html>
