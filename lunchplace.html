@@ -109,3 +109,312 @@
       <div class="ghost" id="emptyGhost" style="display:none">No places yet — add some below.</div>
       <div class="actions">
         <div style="display:flex; gap:8px">
+          <button id="addRow" class="btn">+ Add place</button>
+          <button id="clearAll" class="btn">Clear all</button>
+        </div>
+        <div style="display:flex; gap:8px">
+          <button id="closeModal" class="btn">Cancel</button>
+          <button id="saveModal" class="btn primary">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ---------- Settings ----------
+  const MIN_SLOTS = 30; // ensure at least 30 slices every spin
+
+  // ---------- Storage ----------
+  const KEY = 'lunch_pastel_wheel_v2_weights';
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+  const save = (arr) => localStorage.setItem(KEY, JSON.stringify(arr));
+
+  // ---------- Elements ----------
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  const spinBtn = document.getElementById('spinBtn');
+  const editBtn = document.getElementById('editBtn');
+  const resultBox = document.getElementById('result');
+  const winnerText = document.getElementById('winnerText');
+  const countHint = document.getElementById('countHint');
+
+  const modal = document.getElementById('modal');
+  const rowsBox = document.getElementById('rows');
+  const emptyGhost = document.getElementById('emptyGhost');
+  const addRowBtn = document.getElementById('addRow');
+  const clearAllBtn = document.getElementById('clearAll');
+  const closeModalBtn = document.getElementById('closeModal');
+  const saveModalBtn = document.getElementById('saveModal');
+
+  // ---------- State (with migration from strings) ----------
+  let items = load();
+  if (!Array.isArray(items) || items.length === 0) {
+    items = [
+      { name: "Kallang Wave Mall", weight: 3 },
+      { name: "Bedok Corner",      weight: 2 },
+      { name: "Mr Grumpy",         weight: 1 },
+      { name: "Changi Village",    weight: 2 }
+    ];
+    save(items);
+  } else {
+    // migrate: strings -> objects with weight=1
+    items = items.map(x => typeof x === 'string' ? ({ name: x, weight: 1 }) :
+                               ({ name: x.name, weight: Math.max(1, Number(x.weight)||1) }));
+    save(items);
+  }
+
+  let rotation = 0; // radians
+  let spinning = false;
+  let pastelSeed = Math.random();
+
+  // Crisp canvas on high DPI + responsive size
+  function fitCanvas() {
+    const css = Math.min(window.innerWidth * 0.92, 520);
+    canvas.style.width = css + 'px';
+    canvas.style.height = css + 'px';
+    canvas.width = Math.round(css * DPR);
+    canvas.height = Math.round(css * DPR);
+  }
+  fitCanvas(); window.addEventListener('resize', () => { fitCanvas(); draw(); });
+
+  // Pastel color generator (low saturation, high lightness)
+  function pastel(i, n, seed=0){
+    const h = ( (i/n) * 360 + seed*360 ) % 360;
+    const s = 55;  // saturation %
+    const l = 72;  // lightness %
+    return `hsl(${h} ${s}% ${l}%)`;
+  }
+
+  // ---------- Build slots by weight (>= MIN_SLOTS) ----------
+  function buildSlots(items, minSlots=MIN_SLOTS){
+    const totalWeight = items.reduce((s, it) => s + Math.max(1, Number(it.weight)||1), 0);
+    const slotsTarget = Math.max(minSlots, items.length); // ensure at least 30 or #items
+    // initial allocation
+    const ideals = items.map(it => (Math.max(1, Number(it.weight)||1) / totalWeight) * slotsTarget);
+    const base   = ideals.map(x => Math.max(1, Math.floor(x))); // each gets >=1
+    let sumBase  = base.reduce((a,b)=>a+b,0);
+    let remainder = slotsTarget - sumBase;
+
+    // distribute remainders by largest fractional part
+    const fracIdx = ideals.map((v,i)=>({i, frac: v - Math.floor(v)}))
+                          .sort((a,b)=>b.frac - a.frac);
+    let p = 0;
+    while (remainder > 0) {
+      base[fracIdx[p % fracIdx.length].i] += 1;
+      remainder--;
+      p++;
+    }
+    while (remainder < 0) {
+      // take from smallest fractional (reverse)
+      const idx = fracIdx[fracIdx.length - 1 - (p % fracIdx.length)].i;
+      if (base[idx] > 1) { base[idx] -= 1; remainder++; }
+      p++;
+      if (p > 10000) break; // safety
+    }
+
+    // Construct slots array (contiguous blocks per item)
+    const slots = [];
+    const spans = []; // {startSlot, count} per item for labeling
+    let cursor = 0;
+    for (let i=0;i<items.length;i++){
+      const count = base[i];
+      spans[i] = { start: cursor, count };
+      for (let k=0;k<count;k++){ slots.push(i); cursor++; }
+    }
+    return { slots, spans, slotsCount: slotsTarget };
+  }
+
+  // ---------- Draw wheel (small slots, labels once per item) ----------
+  function draw(){
+    const w = canvas.width, h = canvas.height;
+    const cx = w/2, cy = h/2;
+    const r  = Math.min(cx, cy) - 10*DPR;
+    ctx.clearRect(0,0,w,h);
+
+    if(items.length === 0){
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = `${16*DPR}px system-ui,sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('Add places (Edit) to spin!', cx, cy);
+      return;
+    }
+
+    const { slots, spans, slotsCount } = buildSlots(items);
+    const arc = (Math.PI*2)/slotsCount;
+    const baseAngle = rotation - Math.PI/2;
+
+    // draw slots (thin separators give the "many slices" look)
+    for (let s=0; s<slotsCount; s++){
+      const itemIdx = slots[s];
+      const start = baseAngle + s*arc;
+      const end   = start + arc;
+
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,r,start,end);
+      ctx.closePath();
+      ctx.fillStyle = pastel(itemIdx, items.length, pastelSeed);
+      ctx.fill();
+    }
+
+    // (optional) separators per slot
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.lineWidth = 1*DPR;
+    for (let s=0; s<slotsCount; s++){
+      const start = baseAngle + s*arc;
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,r, start, start);
+      ctx.stroke();
+    }
+
+    // labels: one per item at the center of its span
+    for (let i=0;i<items.length;i++){
+      const span = spans[i];
+      const midSlot = span.start + span.count/2;
+      const mid = baseAngle + midSlot * arc;
+
+      ctx.save();
+      ctx.translate(cx,cy);
+      ctx.rotate(mid);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#0b1020';
+      ctx.font = `bold ${Math.max(12, Math.min(18, r/10))*DPR}px system-ui,sans-serif`;
+      const text = items[i].name;
+      const max = 26;
+      const label = text.length>max ? text.slice(0,max-1)+'…' : text;
+      ctx.fillText(label, r - 14*DPR, 6*DPR);
+      ctx.restore();
+    }
+
+    // hub
+    ctx.beginPath();
+    ctx.arc(cx,cy, 38*DPR, 0, Math.PI*2);
+    ctx.fillStyle = '#0b1020';
+    ctx.fill();
+    ctx.lineWidth = 2*DPR;
+    ctx.strokeStyle = 'rgba(255,255,255,.18)';
+    ctx.stroke();
+  }
+
+  // weighted random via slots
+  function pickSlot(slotsCount){ return Math.floor(Math.random()*slotsCount); }
+
+  // Spin logic (longer for drama)
+  function spin(){
+    if (spinning || items.length===0) return;
+    spinning = true; spinBtn.disabled = true; resultBox.style.display='none';
+
+    const built = buildSlots(items);
+    const { slots, spans, slotsCount } = built;
+    const arc = (Math.PI*2)/slotsCount;
+
+    const pickedSlot = pickSlot(slotsCount);
+    const winnerIdx  = slots[pickedSlot]; // item index
+
+    // spin so the center of the picked slot lands at 12 o'clock
+    const rounds = 8 + Math.floor(Math.random()*5);       // 8–12 full rotations
+    const duration = 5000 + Math.random()*2000;           // 5–7s
+    const slotCenterAngle = (pickedSlot + 0.5) * arc;
+    const baseAngleNow = rotation % (Math.PI*2);
+    const targetMidAtTop = 0; // relative to rotation offset below
+
+    // We want: (rotation - PI/2 + slotCenterAngle) % TAU === -PI/2 (== 0 in our relative space)
+    // So delta = (2π - slotCenterAngle)
+    const deltaToTop = (2*Math.PI - slotCenterAngle) % (2*Math.PI);
+    const start = rotation;
+    const target = start + rounds * (Math.PI*2) + deltaToTop;
+    const totalDelta = target - start;
+
+    const t0 = performance.now();
+    (function anim(now){
+      const t = Math.min(1, (now - t0)/duration);
+      const ease = 1 - Math.pow(1 - t, 4); // quartic-out for heavier slow-down
+      rotation = start + totalDelta * ease;
+      draw();
+      if (t < 1) { requestAnimationFrame(anim); }
+      else {
+        spinning = false; spinBtn.disabled = false;
+        showWinner(winnerIdx, built);
+      }
+    })(t0);
+  }
+
+  function showWinner(itemIdx, built){
+    winnerText.textContent = items[itemIdx].name;
+    countHint.textContent = `${built.slotsCount} slices • ${items.length} places`;
+    resultBox.style.display = 'block';
+  }
+
+  // ---------- Modal helpers (name + weight) ----------
+  function openModal(){
+    rowsBox.innerHTML = '';
+    if (items.length === 0) emptyGhost.style.display = 'block'; else emptyGhost.style.display = 'none';
+    items.forEach(it => addRow(it));
+    modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+  }
+  function closeModal(){
+    modal.classList.remove('open'); modal.setAttribute('aria-hidden','true');
+  }
+  function addRow(value={name:'', weight:1}){
+    const row = document.createElement('div');
+    row.className = 'row';
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.placeholder = 'Place name';
+    nameInput.value = value.name || '';
+
+    const weightInput = document.createElement('input');
+    weightInput.type = 'number';
+    weightInput.min = '1';
+    weightInput.step = '1';
+    weightInput.value = String(Math.max(1, Number(value.weight)||1));
+    weightInput.title = 'Weight (chance / relative slice size)';
+
+    const del = document.createElement('button');
+    del.className = 'del';
+    del.type = 'button';
+    del.textContent = 'Remove';
+    del.onclick = () => {
+      row.remove();
+      if (rowsBox.children.length === 0) emptyGhost.style.display = 'block';
+    };
+
+    row.append(nameInput, weightInput, del);
+    rowsBox.appendChild(row);
+    emptyGhost.style.display = 'none';
+    nameInput.focus();
+  }
+  function saveRows(){
+    const rows = Array.from(rowsBox.querySelectorAll('.row'));
+    const next = rows.map(row => {
+      const [nameInput, weightInput] = row.querySelectorAll('input');
+      const name = nameInput.value.trim();
+      const weight = Math.max(1, Number(weightInput.value)||1);
+      return name ? { name, weight } : null;
+    }).filter(Boolean);
+
+    items = next;
+    save(items);
+    draw();
+  }
+
+  // Events
+  spinBtn.addEventListener('click', spin);
+  editBtn.addEventListener('click', openModal);
+  addRowBtn.addEventListener('click', () => addRow({name:'', weight:1}));
+  clearAllBtn.addEventListener('click', () => { rowsBox.innerHTML=''; emptyGhost.style.display='block'; });
+  closeModalBtn.addEventListener('click', closeModal);
+  saveModalBtn.addEventListener('click', () => { saveRows(); closeModal(); });
+  modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
+  window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+
+  // Init
+  draw();
+})();
+</script>
+</body>
+</html>
