@@ -2,243 +2,341 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Employee Timestamp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Officer Check-in System</title>
+
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      font-size: 18px;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      margin: 0;
-      background-color: #f5f5f5;
-    }
-
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      background-color: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    h2 {
-      font-size: 24px;
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    label {
-      display: block;
-      margin-top: 16px;
-      margin-bottom: 6px;
-      font-weight: bold;
-    }
-
-    select,
-    input {
-      width: 100%;
-      padding: 14px;
-      font-size: 18px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-    }
-
-    .button-row {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    button {
-      padding: 14px;
-      font-size: 18px;
-      width: 100%;
-      border: none;
-      border-radius: 8px;
-      background-color: #007bff;
-      color: white;
-      font-weight: bold;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    .button {
-      display: block;
-      text-align: center;
-      text-decoration: none;
-      background-color: #6c757d;
-      color: white;
-      padding: 14px;
-      margin-top: 24px;
-      border-radius: 8px;
-      font-size: 18px;
-    }
-
-    .button:hover {
-      background-color: #495057;
-    }
-
-    #otherReason,
-    #otherSite {
-      display: none;
-      margin-top: 10px;
-    }
+    /* tiny polish */
+    .card { background: linear-gradient(180deg, #0f172a0d, #ffffff); }
+    .ring-soft { box-shadow: 0 1px 0 rgba(0,0,0,.04), inset 0 0 0 1px rgba(15,23,42,.06); }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h2>Employee Time Log</h2>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-white text-slate-800">
 
-    <label for="employee">Select Name:</label>
-    <select id="employee">
-      <option value="" disabled selected>Select your name</option>
-      <option value="Farook">Farook</option>
-      <option value="Khairul">Khairul</option>
-      <option value="Emy">Emy</option>
-      <option value="Adi">Adi</option>
-      <option value="Lin">Lin</option>
-    </select>
+  <main class="max-w-4xl mx-auto p-6 space-y-8">
+    <!-- Header -->
+    <header class="text-center py-6">
+      <h1 class="text-4xl font-light">Officer Check-in System</h1>
+      <p class="text-slate-600">Professional time tracking for security personnel</p>
+    </header>
 
-    <label for="site">Site/Area:</label>
-    <select id="site" onchange="toggleOtherSite()">
-      <option value="" disabled selected>Select site</option>
-      <option value="Changi">Changi</option>
-      <option value="Pasir Ris">Pasir Ris</option>
-      <option value="East Coast">East Coast</option>
-      <option value="Other">Others</option>
-    </select>
+    <!-- Controls / Status -->
+    <section class="card ring-soft rounded-2xl p-6 space-y-6">
+      <!-- Officer + Site + Reason -->
+      <div class="grid md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">Select Name</label>
+          <select id="employee" class="w-full rounded-xl border border-slate-200 px-3 py-2">
+            <option value="" disabled selected>Select your name</option>
+            <option value="Farook">Farook</option>
+            <option value="Khairul">Khairul</option>
+            <option value="Emy">Emy</option>
+            <option value="Adi">Adi</option>
+            <option value="Lin">Lin</option>
+          </select>
+        </div>
 
-    <input type="text" id="otherSite" placeholder="Enter other site/area" />
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">Site / Area</label>
+          <select id="site" class="w-full rounded-xl border border-slate-200 px-3 py-2">
+            <option value="" disabled selected>Select site</option>
+            <option value="Changi">Changi</option>
+            <option value="Pasir Ris">Pasir Ris</option>
+            <option value="East Coast">East Coast</option>
+            <option value="Other">Others</option>
+          </select>
+          <input id="otherSite" type="text" placeholder="Enter other site/area"
+                 class="mt-2 hidden w-full rounded-xl border border-slate-200 px-3 py-2" />
+        </div>
 
-    <label for="reason">Reason:</label>
-    <select id="reason" onchange="toggleOtherReason()">
-      <option value="" disabled selected>Select reason</option>
-      <option value="On-site inspection">On-site inspection</option>
-      <option value="Logistic Deployment">Logistic Deployment</option>
-      <option value="Admin Deployment">Admin Deployment</option>
-      <option value="Management Update">Management Update</option>
-      <option value="Others">Others</option>
-    </select>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">Reason</label>
+          <select id="reason" class="w-full rounded-xl border border-slate-200 px-3 py-2">
+            <option value="" disabled selected>Select reason</option>
+            <option value="On-site inspection">On-site inspection</option>
+            <option value="Logistic Deployment">Logistic Deployment</option>
+            <option value="Admin Deployment">Admin Deployment</option>
+            <option value="Management Update">Management Update</option>
+            <option value="Others">Others</option>
+          </select>
+          <input id="otherReason" type="text" placeholder="Enter other reason"
+                 class="mt-2 hidden w-full rounded-xl border border-slate-200 px-3 py-2" />
+        </div>
+      </div>
 
-    <input type="text" id="otherReason" placeholder="Enter other reason" />
+      <!-- Buttons + status -->
+      <div class="flex flex-wrap items-center gap-3">
+        <button id="checkInBtn"
+                class="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-5 py-2.5 hover:bg-blue-700 transition">
+          <span>Clock In</span>
+        </button>
+        <button id="checkOutBtn"
+                class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 text-white px-5 py-2.5 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                disabled>
+          <span>Clock Out</span>
+        </button>
 
-    <div class="button-row">
-      <button onclick="logTime('Check In')">Clock In</button>
-      <button onclick="logTime('Check Out')">Clock Out</button>
-    </div>
+        <span id="sessionPill" class="ml-auto hidden text-sm px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+          Active session: —
+        </span>
+      </div>
 
-    <a href="index.html" class="button">Back to Menu</a>
-  </div>
+      <!-- Back -->
+      <div class="text-right">
+        <a href="index.html" class="text-slate-500 hover:text-slate-700 text-sm">Back to Menu →</a>
+      </div>
+    </section>
 
-<!-- Keep the rest of your HTML as-is -->
-<script>
-  let checkInTime = null;
-  let checkOutTime = null;
+    <!-- Recent Sessions -->
+    <section class="card ring-soft rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Recent Sessions</h2>
+        <button id="exportBtn"
+                class="rounded-xl border border-slate-200 px-4 py-2 text-slate-700 hover:bg-slate-50">
+          Export CSV
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="text-left text-slate-500">
+            <tr>
+              <th class="py-2 pr-3">Officer</th>
+              <th class="py-2 pr-3">Site</th>
+              <th class="py-2 pr-3">Reason</th>
+              <th class="py-2 pr-3">Check In</th>
+              <th class="py-2 pr-3">Check Out</th>
+              <th class="py-2 pr-3">Duration</th>
+              <th class="py-2">Status</th>
+            </tr>
+          </thead>
+          <tbody id="rows" class="divide-y divide-slate-100">
+            <!-- Filled by JS -->
+          </tbody>
+        </table>
+      </div>
+      <p id="emptyState" class="text-slate-500 text-sm mt-3 hidden">No records yet.</p>
+    </section>
+  </main>
 
-  function toggleOtherReason() {
-    const reason = document.getElementById('reason').value;
-    document.getElementById('otherReason').style.display = reason === 'Others' ? 'block' : 'none';
-  }
+  <script>
+    // ====== CONFIG ======
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwS5j41FOzUSzNzIZ1bgaHE783O7OXl7Nezin96Ab-d93G6KNBwPrC89Z4o00Hl4Ihy/exec";
+    const STORAGE_KEY = "officer_sessions_v1";
+    const ACTIVE_KEY  = "active_session_v1";
 
-  function toggleOtherSite() {
-    const site = document.getElementById('site').value;
-    document.getElementById('otherSite').style.display = site === 'Other' ? 'block' : 'none';
-  }
+    // ====== ELEMENTS ======
+    const employeeEl = document.getElementById('employee');
+    const siteEl = document.getElementById('site');
+    const otherSiteEl = document.getElementById('otherSite');
+    const reasonEl = document.getElementById('reason');
+    const otherReasonEl = document.getElementById('otherReason');
 
-  function getFullReason() {
-    const reason = document.getElementById('reason').value;
-    if (reason === 'Others') {
-      const other = document.getElementById('otherReason').value.trim();
-      return other || '';
+    const checkInBtn = document.getElementById('checkInBtn');
+    const checkOutBtn = document.getElementById('checkOutBtn');
+    const sessionPill = document.getElementById('sessionPill');
+
+    const rowsTbody = document.getElementById('rows');
+    const emptyState = document.getElementById('emptyState');
+    const exportBtn = document.getElementById('exportBtn');
+
+    // ====== HELPERS ======
+    const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+    const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+    function toggleOther(el, input) {
+      input.classList.toggle('hidden', el.value !== 'Other' && el.value !== 'Others');
     }
-    return reason;
-  }
+    siteEl.addEventListener('change', ()=>toggleOther(siteEl, otherSiteEl));
+    reasonEl.addEventListener('change', ()=>toggleOther(reasonEl, otherReasonEl));
 
-  function getFullSite() {
-    const site = document.getElementById('site').value;
-    if (site === 'Other') {
-      const other = document.getElementById('otherSite').value.trim();
-      return other || '';
-    }
-    return site;
-  }
-
-  function roundToNearest30(mins) {
-    return Math.ceil(mins / 30) * 30;
-  }
-
-  function calculateDuration(start, end) {
-    const totalMinutes = (end - start) / 60000;
-    const roundedMinutes = roundToNearest30(totalMinutes);
-    const hours = Math.floor(roundedMinutes / 60);
-    const minutes = roundedMinutes % 60;
-    return `${hours}h ${minutes}m (rounded)`;
-  }
-
-  function logTime(action) {
-    const name = document.getElementById('employee').value;
-    const site = getFullSite();
-    const reason = getFullReason();
-    const now = new Date();
-
-    if (!name || !site || !reason) {
-      alert("Please complete all fields before proceeding.");
-      return;
+    function valOrOther(sel, otherEl) {
+      const v = sel.value;
+      if (v === 'Other' || v === 'Others') return (otherEl.value || '').trim();
+      return v;
     }
 
-    if (action === 'Check In') {
-      checkInTime = now;
-    } else if (action === 'Check Out') {
-      checkOutTime = now;
+    function roundToNearest30(mins){ return Math.ceil(mins / 30) * 30; }
+    function calcDuration(startISO, endISO){
+      const start = new Date(startISO), end = new Date(endISO);
+      const totalMinutes = (end - start) / 60000;
+      const rounded = roundToNearest30(totalMinutes);
+      const h = Math.floor(rounded / 60), m = rounded % 60;
+      return `${h}h ${m}m (rounded)`;
     }
 
-    let message = `${action} recorded for ${name}\nSite: ${site}\nReason: ${reason}\nTime: ${now.toLocaleString()}`;
+    function fmt(dt){ return new Date(dt).toLocaleString(); }
 
-    if (checkInTime && checkOutTime && checkOutTime > checkInTime) {
-      const duration = calculateDuration(checkInTime, checkOutTime);
-      message += `\n\nWork Duration: ${duration}`;
+    function renderTable(records){
+      rowsTbody.innerHTML = '';
+      if (!records.length){ emptyState.classList.remove('hidden'); return; }
+      emptyState.classList.add('hidden');
+
+      records.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="py-2 pr-3">${escapeHtml(r.name)}</td>
+          <td class="py-2 pr-3">${escapeHtml(r.site)}</td>
+          <td class="py-2 pr-3">${escapeHtml(r.reason)}</td>
+          <td class="py-2 pr-3">${fmt(r.check_in_time)}</td>
+          <td class="py-2 pr-3">${r.check_out_time ? fmt(r.check_out_time) : '<span class="text-amber-600">—</span>'}</td>
+          <td class="py-2 pr-3">${r.check_out_time ? calcDuration(r.check_in_time, r.check_out_time) : '—'}</td>
+          <td class="py-2">
+            <span class="px-2 py-0.5 text-xs rounded-full ${r.status==='checked_out' ? 'bg-slate-100 text-slate-700' : 'bg-emerald-100 text-emerald-800'}">
+              ${r.status.replace('_',' ')}
+            </span>
+          </td>`;
+        rowsTbody.appendChild(tr);
+      });
     }
 
-    const confirmed = confirm(message + "\n\nDo you want to proceed?");
-    if (!confirmed) {
-      alert("Action cancelled.");
-      if (action === 'Check In') checkInTime = null;
-      if (action === 'Check Out') checkOutTime = null;
-      return;
+    function escapeHtml(s){
+      return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
 
-    // ✅ Send data to Google Apps Script Web App
-    fetch("https://script.google.com/macros/s/AKfycbwS5j41FOzUSzNzIZ1bgaHE783O7OXl7Nezin96Ab-d93G6KNBwPrC89Z4o00Hl4Ihy/exec", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        name: name,
-        site: site,
-        reason: reason,
-        action: action
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        alert("Timestamp recorded successfully.");
+    function setActiveSessionUI(active){
+      if (active){
+        sessionPill.classList.remove('hidden');
+        sessionPill.textContent = `Active session: ${active.name} • ${new Date(active.check_in_time).toLocaleTimeString()}`;
+        checkOutBtn.disabled = false;
+        checkInBtn.disabled = true;
       } else {
-        alert("Failed to record timestamp. Please try again.");
+        sessionPill.classList.add('hidden');
+        checkOutBtn.disabled = true;
+        checkInBtn.disabled = false;
       }
-    })
-    .catch(error => {
-      console.error("Error:", error);
-      alert("There was an error. Please check your network or try again later.");
-    });
-  }
-</script>
+    }
 
+    // ====== STATE ======
+    let records = load(STORAGE_KEY, []);
+    let active = load(ACTIVE_KEY, null);
+
+    // ====== ACTIONS ======
+    async function logToSheet(payload){
+      // Returns true/false
+      try{
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(()=>({status:'unknown'}));
+        return data.status === 'success';
+      } catch(e){
+        console.error('GAS error', e);
+        return false;
+      }
+    }
+
+    function ensureFields(){
+      const name = employeeEl.value;
+      const site = valOrOther(siteEl, otherSiteEl);
+      const reason = valOrOther(reasonEl, otherReasonEl);
+      if (!name || !site || !reason) {
+        alert("Please complete all fields before proceeding.");
+        return null;
+      }
+      return { name, site, reason };
+    }
+
+    async function onCheckIn(){
+      const fields = ensureFields(); if(!fields) return;
+      const now = new Date().toISOString();
+
+      const message = `Check In recorded for ${fields.name}
+Site: ${fields.site}
+Reason: ${fields.reason}
+Time: ${new Date(now).toLocaleString()}
+
+Proceed?`;
+      if (!confirm(message)) return;
+
+      const payload = { name: fields.name, site: fields.site, reason: fields.reason, action: 'Check In' };
+      const ok = await logToSheet(payload);
+
+      active = { ...fields, status:'checked_in', check_in_time: now };
+      save(ACTIVE_KEY, active);
+
+      // Add to records list (top)
+      records.unshift({ ...active, check_out_time: null });
+      save(STORAGE_KEY, records);
+
+      setActiveSessionUI(active);
+      renderTable(records);
+      if (ok) alert("Timestamp recorded successfully.");
+      else alert("Saved locally. Failed to record to sheet (network?).");
+    }
+
+    async function onCheckOut(){
+      if (!active){
+        alert("No active session to check out.");
+        return;
+      }
+      const now = new Date().toISOString();
+
+      // Preview duration
+      const preview = calcDuration(active.check_in_time, now);
+      const message = `Check Out for ${active.name}
+Site: ${active.site}
+Reason: ${active.reason}
+Time: ${new Date(now).toLocaleString()}
+Work Duration: ${preview}
+
+Proceed?`;
+      if (!confirm(message)) return;
+
+      const payload = { name: active.name, site: active.site, reason: active.reason, action: 'Check Out' };
+      const ok = await logToSheet(payload);
+
+      // Update the first matching active record
+      const idx = records.findIndex(r => r.status==='checked_in' && r.name===active.name && r.check_in_time===active.check_in_time);
+      if (idx > -1){
+        records[idx] = { ...records[idx], status:'checked_out', check_out_time: now };
+        save(STORAGE_KEY, records);
+      }
+
+      active = null;
+      save(ACTIVE_KEY, active);
+      setActiveSessionUI(active);
+      renderTable(records);
+
+      if (ok) alert("Timestamp recorded successfully.");
+      else alert("Saved locally. Failed to record to sheet (network?).");
+    }
+
+    function exportCSV(){
+      if (!records.length){ alert('No records to export.'); return; }
+      const headers = ["Officer Name","Site","Reason","Check In","Check Out","Duration (Minutes or rounded)","Status"];
+      const rows = records.map(r=>{
+        const dur = r.check_out_time ? Math.ceil((new Date(r.check_out_time) - new Date(r.check_in_time))/60000) : "";
+        return [
+          r.name,
+          r.site,
+          r.reason,
+          new Date(r.check_in_time).toISOString(),
+          r.check_out_time ? new Date(r.check_out_time).toISOString() : "",
+          r.check_out_time ? dur : "",
+          r.status
+        ].map(v => JSON.stringify(v ?? ""));
+      });
+      const csv = [headers.join(","), ...rows.map(r=>r.join(","))].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `officer-sessions-${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ====== INIT ======
+    setActiveSessionUI(active);
+    renderTable(records);
+
+    checkInBtn.addEventListener('click', onCheckIn);
+    checkOutBtn.addEventListener('click', onCheckOut);
+    exportBtn.addEventListener('click', exportCSV);
+  </script>
 </body>
 </html>
