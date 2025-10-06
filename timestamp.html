@@ -8,7 +8,6 @@
   <!-- Tailwind CSS (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* tiny polish */
     .card { background: linear-gradient(180deg, #0f172a0d, #ffffff); }
     .ring-soft { box-shadow: 0 1px 0 rgba(0,0,0,.04), inset 0 0 0 1px rgba(15,23,42,.06); }
   </style>
@@ -24,20 +23,29 @@
 
     <!-- Controls / Status -->
     <section class="card ring-soft rounded-2xl p-6 space-y-6">
-      <!-- Officer + Site + Reason -->
-      <div class="grid md:grid-cols-3 gap-4">
+      <!-- Dept + Officer + Site + Reason -->
+      <div class="grid md:grid-cols-4 gap-4">
+        <!-- Department -->
         <div>
-          <label class="block text-sm font-medium text-slate-600 mb-1">Select Name</label>
-          <select id="employee" class="w-full rounded-xl border border-slate-200 px-3 py-2">
-            <option value="" disabled selected>Select your name</option>
-            <option value="Farook">Farook</option>
-            <option value="Khairul">Khairul</option>
-            <option value="Emy">Emy</option>
-            <option value="Adi">Adi</option>
-            <option value="Lin">Lin</option>
+          <label class="block text-sm font-medium text-slate-600 mb-1">Department</label>
+          <select id="department" class="w-full rounded-xl border border-slate-200 px-3 py-2">
+            <option value="" disabled selected>Select department</option>
+            <!-- EDIT the mapping in JS below if you change these labels -->
+            <option>SPB</option>
+            <option>PMB</option>
+            <option>Others</option>
           </select>
         </div>
 
+        <!-- Officer -->
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">Select Name</label>
+          <select id="employee" class="w-full rounded-xl border border-slate-200 px-3 py-2 opacity-50 cursor-not-allowed" disabled>
+            <option value="" disabled selected>Select department first</option>
+          </select>
+        </div>
+
+        <!-- Site -->
         <div>
           <label class="block text-sm font-medium text-slate-600 mb-1">Site / Area</label>
           <select id="site" class="w-full rounded-xl border border-slate-200 px-3 py-2">
@@ -51,6 +59,7 @@
                  class="mt-2 hidden w-full rounded-xl border border-slate-200 px-3 py-2" />
         </div>
 
+        <!-- Reason -->
         <div>
           <label class="block text-sm font-medium text-slate-600 mb-1">Reason</label>
           <select id="reason" class="w-full rounded-xl border border-slate-200 px-3 py-2">
@@ -111,9 +120,7 @@
               <th class="py-2">Status</th>
             </tr>
           </thead>
-          <tbody id="rows" class="divide-y divide-slate-100">
-            <!-- Filled by JS -->
-          </tbody>
+          <tbody id="rows" class="divide-y divide-slate-100"></tbody>
         </table>
       </div>
       <p id="emptyState" class="text-slate-500 text-sm mt-3 hidden">No records yet.</p>
@@ -126,7 +133,15 @@
     const STORAGE_KEY = "officer_sessions_v1";
     const ACTIVE_KEY  = "active_session_v1";
 
+    // Map departments to allowed names (EDIT this mapping as needed)
+    const DEPT_EMPLOYEES = {
+      "SPB":["Farook", "Khairul","Rafiz","Lin", "Adi","Hurein","Adam", "Ibrahim"],
+      "PMB":["Fazil", "Siti"],
+      "Others":["Lin"]
+    };
+
     // ====== ELEMENTS ======
+    const deptEl = document.getElementById('department');
     const employeeEl = document.getElementById('employee');
     const siteEl = document.getElementById('site');
     const otherSiteEl = document.getElementById('otherSite');
@@ -145,11 +160,44 @@
     const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
     const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
+    function escapeHtml(s){
+      return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    function rebuildEmployeeOptions(deptValue){
+      // Clear options
+      employeeEl.innerHTML = "";
+      const placeholder = document.createElement('option');
+      placeholder.value = "";
+      placeholder.disabled = true;
+      placeholder.selected = true;
+
+      const allowed = DEPT_EMPLOYEES[deptValue] || [];
+      if (!deptValue || allowed.length === 0){
+        placeholder.textContent = "Select department first";
+        employeeEl.appendChild(placeholder);
+        employeeEl.disabled = true;
+        employeeEl.classList.add('opacity-50','cursor-not-allowed');
+        return;
+      }
+
+      placeholder.textContent = "Select your name";
+      employeeEl.appendChild(placeholder);
+      allowed.forEach(n=>{
+        const opt = document.createElement('option');
+        opt.value = n; opt.textContent = n;
+        employeeEl.appendChild(opt);
+      });
+      employeeEl.disabled = false;
+      employeeEl.classList.remove('opacity-50','cursor-not-allowed');
+    }
+
     function toggleOther(el, input) {
       input.classList.toggle('hidden', el.value !== 'Other' && el.value !== 'Others');
     }
     siteEl.addEventListener('change', ()=>toggleOther(siteEl, otherSiteEl));
     reasonEl.addEventListener('change', ()=>toggleOther(reasonEl, otherReasonEl));
+    deptEl.addEventListener('change', ()=>rebuildEmployeeOptions(deptEl.value));
 
     function valOrOther(sel, otherEl) {
       const v = sel.value;
@@ -191,10 +239,6 @@
       });
     }
 
-    function escapeHtml(s){
-      return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-
     function setActiveSessionUI(active){
       if (active){
         sessionPill.classList.remove('hidden');
@@ -212,9 +256,8 @@
     let records = load(STORAGE_KEY, []);
     let active = load(ACTIVE_KEY, null);
 
-    // ====== ACTIONS ======
+    // ====== GAS POST ======
     async function logToSheet(payload){
-      // Returns true/false
       try{
         const res = await fetch(GAS_URL, {
           method: "POST",
@@ -230,14 +273,15 @@
     }
 
     function ensureFields(){
+      const department = deptEl.value;
       const name = employeeEl.value;
       const site = valOrOther(siteEl, otherSiteEl);
       const reason = valOrOther(reasonEl, otherReasonEl);
-      if (!name || !site || !reason) {
+      if (!department || !name || !site || !reason) {
         alert("Please complete all fields before proceeding.");
         return null;
       }
-      return { name, site, reason };
+      return { department, name, site, reason };
     }
 
     async function onCheckIn(){
@@ -245,6 +289,7 @@
       const now = new Date().toISOString();
 
       const message = `Check In recorded for ${fields.name}
+Department: ${fields.department}
 Site: ${fields.site}
 Reason: ${fields.reason}
 Time: ${new Date(now).toLocaleString()}
@@ -252,20 +297,18 @@ Time: ${new Date(now).toLocaleString()}
 Proceed?`;
       if (!confirm(message)) return;
 
-      const payload = { name: fields.name, site: fields.site, reason: fields.reason, action: 'Check In' };
+      const payload = { department: fields.department, name: fields.name, site: fields.site, reason: fields.reason, action: 'Check In' };
       const ok = await logToSheet(payload);
 
       active = { ...fields, status:'checked_in', check_in_time: now };
       save(ACTIVE_KEY, active);
 
-      // Add to records list (top)
       records.unshift({ ...active, check_out_time: null });
       save(STORAGE_KEY, records);
 
       setActiveSessionUI(active);
       renderTable(records);
-      if (ok) alert("Timestamp recorded successfully.");
-      else alert("Saved locally. Failed to record to sheet (network?).");
+      alert(ok ? "Timestamp recorded successfully." : "Saved locally. Failed to record to sheet (network?).");
     }
 
     async function onCheckOut(){
@@ -274,10 +317,10 @@ Proceed?`;
         return;
       }
       const now = new Date().toISOString();
-
-      // Preview duration
       const preview = calcDuration(active.check_in_time, now);
+
       const message = `Check Out for ${active.name}
+Department: ${active.department}
 Site: ${active.site}
 Reason: ${active.reason}
 Time: ${new Date(now).toLocaleString()}
@@ -286,10 +329,9 @@ Work Duration: ${preview}
 Proceed?`;
       if (!confirm(message)) return;
 
-      const payload = { name: active.name, site: active.site, reason: active.reason, action: 'Check Out' };
+      const payload = { department: active.department, name: active.name, site: active.site, reason: active.reason, action: 'Check Out' };
       const ok = await logToSheet(payload);
 
-      // Update the first matching active record
       const idx = records.findIndex(r => r.status==='checked_in' && r.name===active.name && r.check_in_time===active.check_in_time);
       if (idx > -1){
         records[idx] = { ...records[idx], status:'checked_out', check_out_time: now };
@@ -300,9 +342,7 @@ Proceed?`;
       save(ACTIVE_KEY, active);
       setActiveSessionUI(active);
       renderTable(records);
-
-      if (ok) alert("Timestamp recorded successfully.");
-      else alert("Saved locally. Failed to record to sheet (network?).");
+      alert(ok ? "Timestamp recorded successfully." : "Saved locally. Failed to record to sheet (network?).");
     }
 
     function exportCSV(){
@@ -311,9 +351,7 @@ Proceed?`;
       const rows = records.map(r=>{
         const dur = r.check_out_time ? Math.ceil((new Date(r.check_out_time) - new Date(r.check_in_time))/60000) : "";
         return [
-          r.name,
-          r.site,
-          r.reason,
+          r.name, r.site, r.reason,
           new Date(r.check_in_time).toISOString(),
           r.check_out_time ? new Date(r.check_out_time).toISOString() : "",
           r.check_out_time ? dur : "",
@@ -324,19 +362,19 @@ Proceed?`;
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = `officer-sessions-${new Date().toISOString().slice(0,10)}.csv`;
+      a.href = url; a.download = `officer-sessions-${new Date().toISOString().slice(0,10)}.csv`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
 
     // ====== INIT ======
+    rebuildEmployeeOptions(""); // start disabled
     setActiveSessionUI(active);
     renderTable(records);
 
-    checkInBtn.addEventListener('click', onCheckIn);
-    checkOutBtn.addEventListener('click', onCheckOut);
-    exportBtn.addEventListener('click', exportCSV);
+    document.getElementById('checkInBtn').addEventListener('click', onCheckIn);
+    document.getElementById('checkOutBtn').addEventListener('click', onCheckOut);
+    document.getElementById('exportBtn').addEventListener('click', exportCSV);
   </script>
 </body>
 </html>
